@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - ElevateEDU</title>
+    <meta name="description" content="Premium analytics reports for student performance">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        alabaster: '#F8FAFC',
+                        ink: '#0F172A',
+                        slateBody: '#475569',
+                        line: '#E2E8F0',
+                        primary: '#6366F1',
+                        cobalt: '#1D4ED8'
+                    },
+                    borderRadius: {
+                        'clean': '12px'
+                    },
+                    boxShadow: {
+                        soft: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        };
+    </script>
+
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: Inter, -apple-system, system-ui, sans-serif;
+            background: #F8FAFC;
+            color: #0F172A;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            letter-spacing: -0.01em;
+        }
+
+        .surface-card {
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .surface-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 272px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <div class="mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 lg:grid-cols-[272px_1fr]">
+        <aside class="border-r border-line/90 bg-white/70 px-5 py-6 backdrop-blur-[12px]">
+            <a href="/"
+                class="mb-8 flex items-center gap-3 rounded-clean border border-line bg-white px-3 py-3 shadow-soft">
+                <div
+                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-white">
+                    E</div>
+                <div>
+                    <h1 class="text-base font-semibold text-ink">ElevateEDU</h1>
+                    <p class="text-xs text-slateBody">Student Risk Monitor</p>
+                </div>
+            </a>
+
+            <nav aria-label="Main navigation" class="space-y-1">
+                <a href="/"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-layout-dashboard text-base"></i>
+                    Dashboard
+                </a>
+                <a href="/students"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-users text-base"></i>
+                    Students
+                </a>
+                <a href="/alerts"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-bell text-base"></i>
+                    Alerts
+                    {% if unread_alerts > 0 %}
+                    <span class="ml-auto rounded-md bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">{{
+                        unread_alerts }}</span>
+                    {% endif %}
+                </a>
+                <a href="/reports"
+                    class="flex items-center gap-3 rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
+                    <i class="lucide-bar-chart-3 text-base"></i>
+                    Reports
+                </a>
+                <a href="/settings"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-settings text-base"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="px-4 py-5 sm:px-7">
+            <header
+                class="sticky top-3 z-30 mb-5 flex flex-wrap items-center justify-between gap-4 rounded-clean border border-line bg-white/75 px-5 py-4 backdrop-blur-[12px]">
+                <div>
+                    <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-slateBody">Performance Analytics
+                    </p>
+                    <h2 class="text-2xl font-semibold text-ink">Reports</h2>
+                    <p class="mt-1 text-sm text-slateBody">Dense but clear cohort analytics for GPA, attendance, alerts,
+                        and intervention throughput.</p>
+                </div>
+                <span class="rounded-lg border border-line bg-white px-2.5 py-1 text-xs font-medium text-slateBody">{{
+                    total_students }} students</span>
+            </header>
+
+            <section aria-label="Report KPI cards" class="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+                <article class="surface-card p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slateBody">Total Students</p>
+                    <p class="mt-2 text-3xl font-semibold text-ink">{{ total_students }}</p>
+                </article>
+                <article class="surface-card p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slateBody">Total Alerts</p>
+                    <p class="mt-2 text-3xl font-semibold text-ink">{{ total_alerts }}</p>
+                </article>
+                <article class="surface-card p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slateBody">Interventions</p>
+                    <p class="mt-2 text-3xl font-semibold text-ink">{{ total_interventions }}</p>
+                </article>
+                <article class="surface-card p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slateBody">Critical Students</p>
+                    <p class="mt-2 text-3xl font-semibold text-ink">{{ risk_counts.get('critical', 0) }}</p>
+                </article>
+            </section>
+
+            <section class="mb-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
+                <article class="surface-card p-4">
+                    <header class="mb-3 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink">GPA Distribution</h3>
+                        <span
+                            class="rounded-md border border-line bg-alabaster px-2 py-1 text-xs text-slateBody">Academic
+                            Split</span>
+                    </header>
+                    <div class="chart-wrap">
+                        <canvas id="gpaChart"></canvas>
+                    </div>
+                </article>
+
+                <article class="surface-card p-4">
+                    <header class="mb-3 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink">Attendance Distribution</h3>
+                        <span
+                            class="rounded-md border border-line bg-alabaster px-2 py-1 text-xs text-slateBody">Presence
+                            Bands</span>
+                    </header>
+                    <div class="chart-wrap">
+                        <canvas id="attChart"></canvas>
+                    </div>
+                </article>
+            </section>
+
+            <section class="mb-5 grid grid-cols-1 gap-3 2xl:grid-cols-[1fr_1fr]">
+                <article class="surface-card p-4">
+                    <header class="mb-3 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink">Alerts by Type</h3>
+                        <span class="rounded-md border border-line bg-alabaster px-2 py-1 text-xs text-slateBody">Issue
+                            Sources</span>
+                    </header>
+                    <div class="chart-wrap">
+                        <canvas id="alertTypeChart"></canvas>
+                    </div>
+                </article>
+
+                <article class="surface-card p-4">
+                    <header class="mb-3 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink">Section Comparison</h3>
+                        <span class="rounded-md border border-line bg-alabaster px-2 py-1 text-xs text-slateBody">Cohort
+                            Performance</span>
+                    </header>
+                    <div class="overflow-hidden rounded-lg border border-line">
+                        <table class="min-w-full border-collapse bg-white">
+                            <thead>
+                                <tr class="border-b border-line bg-alabaster">
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slateBody">
+                                        Section</th>
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slateBody">
+                                        Avg GPA</th>
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slateBody">
+                                        Avg Attendance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in section_data %}
+                                <tr class="border-b border-line/70 last:border-b-0">
+                                    <td class="px-3 py-2.5 text-sm font-medium text-ink">Section {{ s.section }}</td>
+                                    <td class="px-3 py-2.5 text-sm text-slateBody">{{ s.avg_gpa }}</td>
+                                    <td class="px-3 py-2.5 text-sm text-slateBody">{{ s.avg_attendance }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
+
+            <section class="surface-card p-4">
+                <header class="mb-3 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-ink">Intervention Status</h3>
+                    <span class="rounded-md border border-line bg-alabaster px-2 py-1 text-xs text-slateBody">Pipeline
+                        Health</span>
+                </header>
+                <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    {% for status, count in intervention_status.items() %}
+                    <article class="rounded-lg border border-line bg-white p-3">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slateBody">{{ status|replace('_','
+                            ')|title }}</p>
+                        <p class="mt-2 text-2xl font-semibold text-ink">{{ count }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const gpaDist = {{ gpa_distribution | tojson }};
+        const gpaLabels = ['<2.0', '2.0-2.5', '2.5-3.0', '3.0-3.5', '3.5-4.0'];
+        const gpaValues = gpaLabels.map(label => gpaDist[label] || 0);
+
+        new Chart(document.getElementById('gpaChart'), {
+            type: 'bar',
+            data: {
+                labels: gpaLabels,
+                datasets: [{
+                    data: gpaValues,
+                    backgroundColor: ['#CBD5E1', '#94A3B8', '#A5B4FC', '#6366F1', '#1D4ED8'],
+                    borderWidth: 0,
+                    borderRadius: 8,
+                    maxBarThickness: 42,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(148, 163, 184, 0.18)' },
+                        ticks: { color: '#475569', font: { family: 'Inter' } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#475569', font: { family: 'Inter' } }
+                    }
+                }
+            }
+        });
+
+        const attDist = {{ attendance_distribution | tojson }};
+        new Chart(document.getElementById('attChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(attDist),
+                datasets: [{
+                    data: Object.values(attDist),
+                    backgroundColor: ['#CBD5E1', '#94A3B8', '#6366F1', '#1D4ED8'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '64%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#475569',
+                            padding: 14,
+                            usePointStyle: true,
+                            boxWidth: 10,
+                            font: { family: 'Inter' }
+                        }
+                    }
+                }
+            }
+        });
+
+        const alertTypes = {{ alert_by_type | tojson }};
+        new Chart(document.getElementById('alertTypeChart'), {
+            type: 'polarArea',
+            data: {
+                labels: Object.keys(alertTypes).map(k => k.charAt(0).toUpperCase() + k.slice(1)),
+                datasets: [{
+                    data: Object.values(alertTypes),
+                    backgroundColor: ['rgba(99, 102, 241, 0.35)', 'rgba(29, 78, 216, 0.35)', 'rgba(148, 163, 184, 0.35)'],
+                    borderWidth: 1,
+                    borderColor: 'rgba(99, 102, 241, 0.25)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        grid: { color: 'rgba(148, 163, 184, 0.18)' },
+                        ticks: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#475569',
+                            padding: 14,
+                            usePointStyle: true,
+                            boxWidth: 10,
+                            font: { family: 'Inter' }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

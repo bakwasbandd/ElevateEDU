@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ElevateEDU</title>
+    <meta name="description" content="Premium dashboard for student risk monitoring">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        alabaster: '#F8FAFC',
+                        ink: '#0F172A',
+                        slateBody: '#475569',
+                        line: '#E2E8F0',
+                        primary: '#6366F1',
+                        cobalt: '#1D4ED8'
+                    },
+                    borderRadius: {
+                        'clean': '12px'
+                    },
+                    boxShadow: {
+                        soft: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        };
+    </script>
+
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: Inter, -apple-system, system-ui, sans-serif;
+            background: #F8FAFC;
+            color: #0F172A;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            letter-spacing: -0.01em;
+        }
+
+        .surface-card {
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .surface-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 272px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <div class="mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 lg:grid-cols-[272px_1fr]">
+        <aside class="border-r border-line/90 bg-white/70 px-5 py-6 backdrop-blur-[12px]">
+            <a href="/"
+                class="mb-8 flex items-center gap-3 rounded-clean border border-line bg-white px-3 py-3 shadow-soft">
+                <div
+                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-white">
+                    E</div>
+                <div>
+                    <h1 class="text-base font-semibold text-ink">ElevateEDU</h1>
+                    <p class="text-xs text-slateBody">Student Risk Monitor</p>
+                </div>
+            </a>
+
+            <nav aria-label="Main navigation" class="space-y-1">
+                <a href="/"
+                    class="flex items-center gap-3 rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
+                    <i class="lucide-layout-dashboard text-base"></i>
+                    Dashboard
+                </a>
+                <a href="/students"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-users text-base"></i>
+                    Students
+                </a>
+                <a href="/alerts"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-bell text-base"></i>
+                    Alerts
+                    {% if unread_alerts > 0 %}
+                    <span class="ml-auto rounded-md bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">{{
+                        unread_alerts }}</span>
+                    {% endif %}
+                </a>
+                <a href="/reports"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-bar-chart-3 text-base"></i>
+                    Reports
+                </a>
+                <a href="/settings"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-settings text-base"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="px-4 py-5 sm:px-7">
+            <header
+                class="sticky top-3 z-30 mb-5 flex flex-wrap items-center justify-between gap-4 rounded-clean border border-line bg-white/75 px-5 py-4 backdrop-blur-[12px]">
+                <div>
+                    <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-slateBody">Student Risk Monitoring
+                    </p>
+                    <h2 class="text-2xl font-semibold text-ink">Dashboard</h2>
+                    <p class="mt-1 text-sm text-slateBody">Compact operational view of performance, attendance, and
+                        active alerts.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span
+                        class="rounded-lg border border-line bg-white px-2.5 py-1 text-xs font-medium text-slateBody">{{
+                        total_students }} students</span>
+                    <form action="/alerts/run-scan" method="POST">
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500">
+                            <i class="lucide-scan text-sm"></i>
+                            Run Scan
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <section aria-label="KPI cards" class="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+                <article class="surface-card p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slateBody">Students</p>
+                    <p class="mt-2 text-3xl font-semibold text-ink">{{ total_students }}</p>
+                </article>
+                <article class="surface-card p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slateBody">At Risk</p>
+                    <p class="mt-2 text-3xl font-semibold text-ink">{{ at_risk }}</p>
+                </article>
+                <article class="surface-card p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slateBody">Critical</p>
+                    <p class="mt-2 text-3xl font-semibold text-ink">{{ critical }}</p>
+                </article>
+                <article class="surface-card p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slateBody">Average GPA</p>
+                    <p class="mt-2 text-3xl font-semibold text-ink">{{ avg_gpa }}</p>
+                </article>
+            </section>
+
+            <section class="mb-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
+                <article class="surface-card p-4">
+                    <header class="mb-3 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink">Risk Distribution</h3>
+                        <span class="rounded-md border border-line bg-alabaster px-2 py-1 text-xs text-slateBody">Cohort
+                            Mix</span>
+                    </header>
+                    <div class="chart-wrap">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                </article>
+
+                <article class="surface-card p-4">
+                    <header class="mb-3 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink">Attendance Overview</h3>
+                        <span class="rounded-md border border-line bg-alabaster px-2 py-1 text-xs text-slateBody">Trend
+                            Signals</span>
+                    </header>
+                    <div class="chart-wrap">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </article>
+            </section>
+
+            <section class="grid grid-cols-1 gap-3 2xl:grid-cols-[1.1fr_0.9fr]">
+                <article class="surface-card p-4">
+                    <header class="mb-3 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink">Recent Alerts</h3>
+                        <a href="/alerts"
+                            class="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-slateBody transition hover:border-primary/30 hover:text-primary">View
+                            All</a>
+                    </header>
+
+                    {% if recent_alerts %}
+                    <div class="space-y-2">
+                        {% for alert in recent_alerts %}
+                        <div class="rounded-lg border border-line bg-white px-3 py-2.5">
+                            <p class="text-sm font-medium text-ink">{{ alert.message }}</p>
+                            <div class="mt-1.5 flex items-center gap-2 text-xs text-slateBody">
+                                <span
+                                    class="rounded-md border border-line bg-alabaster px-2 py-0.5 font-semibold uppercase">{{
+                                    alert.severity.value }}</span>
+                                <span>{{ alert.created_at.strftime('%b %d, %H:%M') }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="rounded-lg border border-dashed border-line bg-white px-4 py-10 text-center">
+                        <h4 class="text-base font-semibold text-ink">No alerts yet</h4>
+                        <p class="mt-1 text-sm text-slateBody">Run a scan to check for at-risk students.</p>
+                    </div>
+                    {% endif %}
+                </article>
+
+                <article class="surface-card p-4">
+                    <header class="mb-3 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-ink">Top At-Risk Students</h3>
+                        <a href="/students?risk=critical"
+                            class="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-slateBody transition hover:border-primary/30 hover:text-primary">View
+                            All</a>
+                    </header>
+
+                    {% if top_risk_students %}
+                    <div class="overflow-hidden rounded-lg border border-line">
+                        <table class="min-w-full border-collapse bg-white">
+                            <thead>
+                                <tr class="border-b border-line bg-alabaster">
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slateBody">
+                                        Student</th>
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slateBody">
+                                        GPA</th>
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slateBody">
+                                        Attendance</th>
+                                    <th
+                                        class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slateBody">
+                                        Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in top_risk_students %}
+                                <tr class="border-b border-line/70 last:border-b-0">
+                                    <td class="px-3 py-2.5 text-sm font-medium text-ink">
+                                        <a href="/students/{{ s.id }}" class="hover:text-primary">{{ s.name }}</a>
+                                    </td>
+                                    <td class="px-3 py-2.5 text-sm text-slateBody">{{ "%.2f"|format(s.overall_gpa) }}
+                                    </td>
+                                    <td class="px-3 py-2.5 text-sm text-slateBody">{{
+                                        "%.1f"|format(s.attendance_percentage) }}%</td>
+                                    <td class="px-3 py-2.5">
+                                        <span
+                                            class="rounded-md border border-line bg-alabaster px-2 py-0.5 text-xs font-semibold uppercase text-slateBody">{{
+                                            s.risk_level.value }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="rounded-lg border border-dashed border-line bg-white px-4 py-10 text-center">
+                        <h4 class="text-base font-semibold text-ink">No high-risk students</h4>
+                        <p class="mt-1 text-sm text-slateBody">All students appear to be on track.</p>
+                    </div>
+                    {% endif %}
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const riskData = {{ risk_distribution | tojson }};
+
+        new Chart(document.getElementById('riskChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['None', 'Low', 'Medium', 'High', 'Critical'],
+                datasets: [{
+                    data: [riskData.none || 0, riskData.low || 0, riskData.medium || 0, riskData.high || 0, riskData.critical || 0],
+                    backgroundColor: ['#94A3B8', '#64748B', '#6366F1', '#1D4ED8', '#E11D48'],
+                    borderWidth: 0,
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#475569',
+                            padding: 14,
+                            usePointStyle: true,
+                            boxWidth: 10,
+                            font: { family: 'Inter' }
+                        }
+                    }
+                },
+                cutout: '68%',
+            }
+        });
+
+        new Chart(document.getElementById('attendanceChart'), {
+            type: 'bar',
+            data: {
+                labels: ['None', 'Low', 'Medium', 'High', 'Critical'],
+                datasets: [{
+                    label: 'Students',
+                    data: [riskData.none || 0, riskData.low || 0, riskData.medium || 0, riskData.high || 0, riskData.critical || 0],
+                    backgroundColor: ['#CBD5E1', '#94A3B8', '#A5B4FC', '#6366F1', '#1D4ED8'],
+                    borderWidth: 0,
+                    borderRadius: 8,
+                    maxBarThickness: 46,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(148, 163, 184, 0.18)' },
+                        ticks: { color: '#475569', font: { family: 'Inter' } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#475569', font: { family: 'Inter' } }
+                    },
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

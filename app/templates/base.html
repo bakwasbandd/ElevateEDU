@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ElevateEDU{% endblock %}</title>
+    <meta name="description" content="AI-powered student risk monitoring and intervention system">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <nav class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-brand">
+            <div class="logo">E</div>
+            <div>
+                <h1>ElevateEDU</h1>
+                <span>Student Risk Monitor</span>
+            </div>
+        </a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+                <i class="lucide-layout-dashboard"></i> Dashboard
+            </a>
+            <a href="/students" class="nav-link {% if active_page == 'students' %}active{% endif %}">
+                <i class="lucide-users"></i> Students
+            </a>
+            <a href="/alerts" class="nav-link {% if active_page == 'alerts' %}active{% endif %}">
+                <i class="lucide-bell"></i> Alerts
+                {% if unread_alerts > 0 %}
+                <span class="badge">{{ unread_alerts }}</span>
+                {% endif %}
+            </a>
+            <a href="/reports" class="nav-link {% if active_page == 'reports' %}active{% endif %}">
+                <i class="lucide-bar-chart-3"></i> Reports
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="/settings" class="nav-link {% if active_page == 'settings' %}active{% endif %}">
+                <i class="lucide-settings"></i> Settings
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

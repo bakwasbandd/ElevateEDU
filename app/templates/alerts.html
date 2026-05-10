@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts - ElevateEDU</title>
+    <meta name="description" content="Premium alert monitoring and triage panel">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        alabaster: '#F8FAFC',
+                        ink: '#0F172A',
+                        slateBody: '#475569',
+                        line: '#E2E8F0',
+                        primary: '#6366F1',
+                        cobalt: '#1D4ED8'
+                    },
+                    borderRadius: {
+                        clean: '12px'
+                    },
+                    boxShadow: {
+                        soft: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        };
+    </script>
+
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
+
+    <style>
+        body {
+            font-family: Inter, -apple-system, system-ui, sans-serif;
+            background: #F8FAFC;
+            color: #0F172A;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            letter-spacing: -0.01em;
+        }
+
+        .surface-card {
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .surface-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+        }
+
+        .severity-critical {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .severity-high {
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+        }
+
+        .severity-medium {
+            background: #fffbeb;
+            color: #a16207;
+            border: 1px solid #fde68a;
+        }
+
+        .severity-low {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <div class="mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 lg:grid-cols-[272px_1fr]">
+        <aside class="border-r border-line/90 bg-white/70 px-5 py-6 backdrop-blur-[12px]">
+            <a href="/"
+                class="mb-8 flex items-center gap-3 rounded-clean border border-line bg-white px-3 py-3 shadow-soft">
+                <div
+                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-white">
+                    E</div>
+                <div>
+                    <h1 class="text-base font-semibold text-ink">ElevateEDU</h1>
+                    <p class="text-xs text-slateBody">Student Risk Monitor</p>
+                </div>
+            </a>
+
+            <nav aria-label="Main navigation" class="space-y-1">
+                <a href="/"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-layout-dashboard text-base"></i>
+                    Dashboard
+                </a>
+                <a href="/students"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-users text-base"></i>
+                    Students
+                </a>
+                <a href="/alerts"
+                    class="flex items-center gap-3 rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
+                    <i class="lucide-bell text-base"></i>
+                    Alerts
+                    {% if unread_alerts > 0 %}
+                    <span class="ml-auto rounded-md bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">{{
+                        unread_alerts }}</span>
+                    {% endif %}
+                </a>
+                <a href="/reports"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-bar-chart-3 text-base"></i>
+                    Reports
+                </a>
+                <a href="/settings"
+                    class="flex items-center gap-3 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-slateBody transition hover:border-line hover:bg-white">
+                    <i class="lucide-settings text-base"></i>
+                    Settings
+                </a>
+            </nav>
+        </aside>
+
+        <main class="px-4 py-5 sm:px-7">
+            <header
+                class="sticky top-3 z-30 mb-5 flex flex-wrap items-center justify-between gap-4 rounded-clean border border-line bg-white/75 px-5 py-4 backdrop-blur-[12px]">
+                <div>
+                    <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-slateBody">Incident Feed</p>
+                    <h2 class="text-2xl font-semibold text-ink">Alerts</h2>
+                    <p class="mt-1 text-sm leading-relaxed text-slateBody">{{ alerts|length }} alerts found across
+                        monitored students.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <form action="/alerts/mark-all-read" method="POST">
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold text-slateBody transition hover:border-primary/30 hover:text-primary">
+                            <i class="lucide-check-check text-sm"></i>
+                            Mark All Read
+                        </button>
+                    </form>
+                    <form action="/alerts/run-scan" method="POST">
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500">
+                            <i class="lucide-scan text-sm"></i>
+                            Run Scan
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <section class="surface-card mb-4 p-4">
+                <form method="GET" action="/alerts" class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slateBody">
+                        Alert Type
+                        <select name="alert_type" onchange="this.form.submit()"
+                            class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-primary/40">
+                            <option value="all" {% if current_type=='all' %}selected{% endif %}>All Types</option>
+                            <option value="attendance" {% if current_type=='attendance' %}selected{% endif %}>Attendance
+                            </option>
+                            <option value="academic" {% if current_type=='academic' %}selected{% endif %}>Academic
+                            </option>
+                            <option value="submission" {% if current_type=='submission' %}selected{% endif %}>Submission
+                            </option>
+                        </select>
+                    </label>
+
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slateBody">
+                        Severity
+                        <select name="severity" onchange="this.form.submit()"
+                            class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-primary/40">
+                            <option value="all" {% if current_severity=='all' %}selected{% endif %}>All Severities
+                            </option>
+                            <option value="medium" {% if current_severity=='medium' %}selected{% endif %}>Medium
+                            </option>
+                            <option value="high" {% if current_severity=='high' %}selected{% endif %}>High</option>
+                            <option value="critical" {% if current_severity=='critical' %}selected{% endif %}>Critical
+                            </option>
+                        </select>
+                    </label>
+
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slateBody">
+                        Status
+                        <select name="status" onchange="this.form.submit()"
+                            class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-primary/40">
+                            <option value="all" {% if current_status=='all' %}selected{% endif %}>All</option>
+                            <option value="unread" {% if current_status=='unread' %}selected{% endif %}>Unread</option>
+                            <option value="read" {% if current_status=='read' %}selected{% endif %}>Read</option>
+                            <option value="resolved" {% if current_status=='resolved' %}selected{% endif %}>Resolved
+                            </option>
+                        </select>
+                    </label>
+                </form>
+            </section>
+
+            <section class="space-y-3">
+                {% if grouped_alerts %}
+                {% for group in grouped_alerts %}
+                {% set student = group.student %}
+                {% set student_alerts = group.alerts %}
+                {% set has_unread = student_alerts | rejectattr('is_read') | list | length > 0 %}
+                {% set intervention_map = {} %}
+                <details class="surface-card group p-4" {% if loop.index==1 %}open{% endif %}>
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            {% if has_unread %}
+                            <span class="h-2 w-2 rounded-full bg-primary"></span>
+                            {% endif %}
+                            <h3 class="text-base font-semibold text-ink">{{ student.name }}</h3>
+                            {% set sev = student_alerts[0].severity.value %}
+                            <span
+                                class="rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase severity-{{ sev }}">{{
+                                sev }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-slateBody">
+                            <span>{{ student_alerts|length }} alerts</span>
+                            <i class="lucide-chevron-down text-base transition group-open:rotate-180"></i>
+                        </div>
+                    </summary>
+
+                    <div class="mt-3 space-y-2 border-t border-line/80 pt-3">
+                        {% for alert in student_alerts %}
+                        {% set linked_intervention = (alert.interventions | sort(attribute='created_at', reverse=true) |
+                        first) if alert.interventions else none %}
+                        <article class="rounded-lg border border-line bg-white px-3 py-2.5">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-medium text-ink">{{ alert.message }}</p>
+                                    <div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slateBody">
+                                        <span
+                                            class="rounded-md border border-line bg-alabaster px-2 py-0.5 font-semibold capitalize">{{
+                                            alert.type.value }}</span>
+                                        <span>{{ alert.created_at.strftime('%b %d, %H:%M') }}</span>
+                                        {% if not alert.is_read %}
+                                        <span
+                                            class="rounded-md bg-primary/10 px-2 py-0.5 font-semibold text-primary">Unread</span>
+                                        {% endif %}
+                                        {% if linked_intervention %}
+                                        <span
+                                            class="rounded-md border border-line bg-alabaster px-2 py-0.5 font-semibold uppercase">Intervention:
+                                            {{ linked_intervention.status.value.replace('_', ' ') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    {% if not alert.is_read %}
+                                    <form action="/alerts/{{ alert.id }}/read" method="POST">
+                                        <button type="submit"
+                                            class="rounded-lg border border-line bg-white px-2.5 py-1 text-xs font-semibold text-slateBody transition hover:border-primary/30 hover:text-primary"
+                                            title="Mark as read">
+                                            <i class="lucide-check"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    {% if not linked_intervention or linked_intervention.status.value != 'in_progress'
+                                    %}
+                                    <form action="/alerts/{{ alert.id }}/intervene" method="POST">
+                                        <button type="submit"
+                                            class="rounded-lg bg-primary px-3 py-1 text-xs font-semibold text-white transition hover:bg-indigo-500"
+                                            title="Start intervention">
+                                            <i class="lucide-play mr-1"></i>
+                                            Intervene
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    {% if linked_intervention and linked_intervention.status.value == 'in_progress' %}
+                                    <form action="/alerts/{{ alert.id }}/complete" method="POST">
+                                        <button type="submit"
+                                            class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                            title="Complete intervention">
+                                            <i class="lucide-check-check mr-1"></i>
+                                            Complete
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </article>
+                        {% endfor %}
+
+                        <a href="/students/{{ student.id }}"
+                            class="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500">
+                            <i class="lucide-arrow-right text-xs"></i>
+                            View Student Profile
+                        </a>
+                    </div>
+                </details>
+                {% endfor %}
+                {% else %}
+                <div class="surface-card p-10 text-center">
+                    <h3 class="text-lg font-semibold text-ink">No alerts</h3>
+                    <p class="mt-1 text-sm text-slateBody">Run a scan to check for at-risk students.</p>
+                </div>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
