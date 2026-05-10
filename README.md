@@ -59,5 +59,7 @@ Set the `AI_STRATEGY` environment variable or use the Settings page:
 
 ## Team
 
-- 3 members
+- Shaheer Adnan
+- Muntaha Adnan
+- Usaid Sajid
 - FAST-NUCES Karachi, Spring 2026
