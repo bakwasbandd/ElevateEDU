@@ -1,0 +1,7 @@
+.env
+*.db
+__pycache__/
+*.pyc
+OllamaSetup.exe
+.idea/
+.vscode/
